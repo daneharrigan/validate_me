@@ -12,6 +12,19 @@
 		$.merge(validates_options.required, name);
 	}
 
+	$.validates_numericality_of = function(name, options) {
+		if(!options)
+			options = {};
+		if(!options['on'])
+			options['on'] = ['submit'];
+
+		//var regex = '^([\d])'+required+'$'
+		$(options).each(function(){
+			$('input[name='+name+']').bind(this, function(){
+			});
+		});
+	}
+
 	$.fn.validate = function()
 	{
 		$(this).submit(function(event){
@@ -58,7 +71,7 @@
 					{
 						var selected = false;
 						$(this).find('option').each(function(){
-							if(this.selected)
+							if(this.selected && this.value.length>0)
 								selected = true;
 						});
 
