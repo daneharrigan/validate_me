@@ -1,0 +1,23 @@
+h1. validates_helpers (in jQuery)
+
+h2. The Plan
+It's still an idea of mine that I'm trying to execute. Definitely not complete, but I'm attempting to model HTML form validation off of Ruby on Rails model data validating methods.
+
+h2. The Syntax
+
+This is how I'm structuring things:
+
+h3. Required fields
+
+@
+$.validates_presence_of('first_name');
+$.validates_presence_of('age');
+
+// or
+
+$.validates_presence_of('first_name','age');
+@
+
+h3. Numbers
+
+@ $.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 }); @
