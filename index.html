@@ -9,6 +9,7 @@
 			$.validates_presence_of('first_name');
 			$.validates_presence_of('gender');
 			$.validates_presence_of('eye_color');
+			$.validates_numericality_of('first_name');
 
 			$('#my_form').validate();
 		});
@@ -24,6 +25,8 @@
 </head>
 <body>
 	<h1>jQuery validation_helper</h1>
+
+
 	<form action="#" method="get" accept-charset="utf-8" id="my_form">
 		First Name: <input type="text" name="first_name" value="" id="first_name"/>
 		<br/>

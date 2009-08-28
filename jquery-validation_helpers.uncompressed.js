@@ -18,9 +18,39 @@
 		if(!options['on'])
 			options['on'] = ['submit'];
 
-		//var regex = '^([\d])'+required+'$'
-		$(options).each(function(){
-			$('input[name='+name+']').bind(this, function(){
+		$(options['on']).each(function(i, option){
+			var required = '*';
+			if($.inArray(name, validates_options.required))
+				required = '+';
+
+			var field = $('input[name='+name+']').get(0);
+			var element = field;
+			if(option == 'submit')
+			{
+				while(element = $(field).parent())
+				{
+					if(element.get(0).tagName.toLowerCase() == 'form')
+						break;
+				}
+			}
+			$(element).bind(option, function(){
+				if(field.value.match('/^[\d]'+required+'$/') == -1)
+					add_validation_message(name, 'value was not a number');
+
+				if( (options['greater_than'] && field.value < options['greater_than']) || (options['greater_than_or_equal_to'] && field.value <= options['greater_than_or_equal_to']) )
+					add_validation_message(name, 'value was too small');
+
+				if( (options['less_than'] && field.value > options['less_than']) || (options['less_than_or_equal_to'] && field.value >= options['less_than_or_equal_to']) )
+					add_validation_message(name, 'value was too large');
+
+				if(options['equal_to'] && field.value != options['equal_to'])
+					add_validation_message(name, 'value was not equal to '+options['equal_to']);
+
+				if(options['even'] && options['even'] == true && field.value%2!=0)
+					add_validation_message(name, 'value was not even');
+
+				if(options['odd'] && options['odd'] == true && field.value%2==0)
+					add_validation_message(name, 'value was not odd');
 			});
 		});
 	}
@@ -33,7 +63,12 @@
 			// temporary code
 			var message = '';
 			for(msg in validates_errors)
+			{
 				message += msg+"\n";
+				$(validates_errors[msg]).each(function(){
+					message += this + "\n";
+				});
+			}
 			alert(message); // temporary
 
 			if($(validates_errors).length>0)
