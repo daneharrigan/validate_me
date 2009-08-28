@@ -11,13 +11,13 @@ This is how I'm structuring things:
 h3. Required fields
 
 
-<pre><code> $.validates_presence_of('first_name');
-$.validates_presence_of('age'); </code></pre>
+<pre><code>$.validates_presence_of('first_name');
+$.validates_presence_of('age');</code></pre>
 
 Or define them in one line:
 
-<pre><code> $.validates_presence_of('first_name','age'); </code></pre>
+<code>$.validates_presence_of('first_name','age');</code>
 
 h3. Numbers
 
-<pre><code> $.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 }); </code></pre>
+<code>$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });</code>
