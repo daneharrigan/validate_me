@@ -21,14 +21,14 @@
 		$.merge(validate_options.presence_of, names);
 	}
 
-	$.validates_numericality_of = function(name, options) { store_values(name, options) }
-	$.validates_length_of = function(name, options) { store_values(name, options) }
-	$.validates_format_of = function(name, options) { store_values(name, options) }
-	$.validates_confirmation_of = function(name, options) { store_values(name, options) }
-	$.validates_uniqueness_of = function(name, options) { store_values(name, options) }
+	$.validates_numericality_of = function(name, options) { options['method'] = 'numericality'; store_values(name, options) }
+	$.validates_length_of = function(name, options) { options['method'] = 'length'; store_values(name, options) }
+	$.validates_format_of = function(name, options) { options['method'] = 'format'; store_values(name, options) }
+	$.validates_confirmation_of = function(name, options) { options['method'] = 'confirmation'; store_values(name, options) }
+	$.validates_uniqueness_of = function(name, options) { options['method'] = 'uniqueness'; store_values(name, options) }
 
-	$.validates_exclusion_of = function(name, options) { store_values(name, options) }
-	$.validates_inclusion_of = function(name, options) { store_values(name, options) }
+	$.validates_exclusion_of = function(name, options) { options['method'] = 'exclusion'; store_values(name, options) }
+	$.validates_inclusion_of = function(name, options) { options['method'] = 'inclusion'; store_values(name, options) }
 
 
 	$.fn.validate = function()
