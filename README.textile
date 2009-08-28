@@ -1,6 +1,7 @@
 h1. validates_helpers (in jQuery)
 
 h2. The Plan
+
 It's still an idea of mine that I'm trying to execute. Definitely not complete, but I'm attempting to model HTML form validation off of Ruby on Rails model data validating methods.
 
 h2. The Syntax
