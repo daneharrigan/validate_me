@@ -12,10 +12,13 @@ h3. Required fields
 
 <code>
  $.validates_presence_of('first_name');
+
  $.validates_presence_of('age');
+</code>
 
- // or
+Or define them in one line:
 
+<code>
  $.validates_presence_of('first_name','age');
 </code>
 
