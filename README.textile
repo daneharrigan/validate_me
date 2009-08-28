@@ -11,16 +11,16 @@ This is how I'm structuring things:
 h3. Required fields
 
 <code>
-$.validates_presence_of('first_name');
-$.validates_presence_of('age');
+ $.validates_presence_of('first_name');
+ $.validates_presence_of('age');
 
-// or
+ // or
 
-$.validates_presence_of('first_name','age');
+ $.validates_presence_of('first_name','age');
 </code>
 
 h3. Numbers
 
 <code>
-$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
+ $.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
 </code>
