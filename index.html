@@ -8,7 +8,7 @@
 		$(function(){
 			$.validates_presence_of('age');
 			$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
-			//$.debug_validates_helpers();
+ 			//$.debug_validates_helpers();
 
 			$('#my_form').validate();
 
@@ -33,6 +33,8 @@
 	<h1>jQuery validation_helper</h1>
 	<form action="#" method="get" accept-charset="utf-8" id="my_form">
 		First Name: <input type="text" name="first_name" value="" id="first_name"/>
+		<br/>
+		Age: <input type="text" name="age" value="12" id="age"/>
 		<br/>
 		Gender:
 		<input type="radio" name="gender" value="m" id="gender_m"/> Male

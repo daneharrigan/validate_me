@@ -3,7 +3,9 @@
 		elements: {},
 		presence_of: [],
 		events: {},
-		perform_actions_on: {}
+		perform_actions_on: {},
+		errors: {},
+		form: null
 	};
 	
 	var validates_options = { required: [] };
@@ -32,11 +34,22 @@
 
 	$.fn.validate = function()
 	{
-		for(var i in validate_options.events)
+		validate_options.form = this;
+		for(var e in validate_options.events)
 		{
-			$(this).each(function(){
-				var obj;
-				alert(this+':'+i);
+			$(validate_options.events[e]).each(function(){
+				var element = get_element(this);
+				if(element)
+				{
+					if(e != 'submit')
+					{
+						$(validate_options.perform_actions_on[this]).each(function(){
+							element.bind(e, method_handler[this]);
+						});
+					}
+					else
+					{}
+				}
 			});
 		}
 	}
@@ -116,4 +129,54 @@
 		eval('var obj = { '+name+': options };');
 		merge_objects(validate_options.elements, obj);
 	}
+
+	var get_element = function(name)
+	{
+		var el = $(validate_options.form).find('input[name='+name+']');
+		if(el.size() == 0)
+			el = $(validate_options.form).find('select[name='+name+']');
+		if(el.size() == 0)
+			el = $(validate_options.form).find('textarea[name='+name+']');
+		return el;
+	}
+
+	var add_error = function(name, method, message)
+	{
+		if(!validate_options.errors[name])
+			validate_options.errors[name] = {};
+
+		validate_options.errors[name][method] = message;
+	}
+
+	var method_handler = {
+		numericality: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value;
+			var method = 'numericality';
+
+			if(!options['message']) options['message'] = 'does not meet requirements.';
+
+			if(!!!value.match(/^[\d]*$/))
+				add_error(this.name, options['message']);
+
+			if( !(options['greater_than'] && value>options['greater_than']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['less_than'] && value<options['less_than']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['greater_than_or_equal_to'] && value>=options['greater_than_or_equal_to']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['less_than_or_equal_to'] && value<=options['less_than_or_equal_to']) )
+				add_error(this.name, method, options['message']);
+			//alert($(validate_options.errors[this.name]).size());
+		},
+		length: function(event, element) {},
+		format: function(event, element) {},
+		confirmation: function() {},
+		uniqueness: function(event, element) {},
+		exclusion: function(event, element) {},
+		inclusion: function(event, element) {},
+	};
 })(jQuery);
