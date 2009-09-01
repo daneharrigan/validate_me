@@ -7,8 +7,10 @@
 	<script type="text/javascript" charset="utf-8">
 		$(function(){
 			$.validates_presence_of('age');
-
 			$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
+			//$.debug_validates_helpers();
+
+			$('#my_form').validate();
 
 			//$.debug_validates_helpers();
 			//$.validates_presence_of('gender');

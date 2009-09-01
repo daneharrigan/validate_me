@@ -1,9 +1,9 @@
 (function($){
-	var debug = true; // set to false before compressing
 	var validate_options = {
 		elements: {},
 		presence_of: [],
-		events: {}
+		events: {},
+		perform_actions_on: {}
 	};
 	
 	var validates_options = { required: [] };
@@ -21,42 +21,58 @@
 		$.merge(validate_options.presence_of, names);
 	}
 
-	$.validates_numericality_of = function(name, options) { options['method'] = 'numericality'; store_values(name, options) }
-	$.validates_length_of = function(name, options) { options['method'] = 'length'; store_values(name, options) }
-	$.validates_format_of = function(name, options) { options['method'] = 'format'; store_values(name, options) }
-	$.validates_confirmation_of = function(name, options) { options['method'] = 'confirmation'; store_values(name, options) }
-	$.validates_uniqueness_of = function(name, options) { options['method'] = 'uniqueness'; store_values(name, options) }
-
-	$.validates_exclusion_of = function(name, options) { options['method'] = 'exclusion'; store_values(name, options) }
-	$.validates_inclusion_of = function(name, options) { options['method'] = 'inclusion'; store_values(name, options) }
+	$.validates_numericality_of = function(name, options) { store_values(name, options, 'numericality') }
+	$.validates_length_of = function(name, options) { store_values(name, options, 'length') }
+	$.validates_format_of = function(name, options) { store_values(name, options, 'format') }
+	$.validates_confirmation_of = function(name, options) { store_values(name, options, 'confirmation') }
+	$.validates_uniqueness_of = function(name, options) { store_values(name, options, 'uniqueness') }
+	$.validates_exclusion_of = function(name, options) { store_values(name, options, 'exclusion') }
+	$.validates_inclusion_of = function(name, options) { store_values(name, options, 'inclusion') }
 
 
 	$.fn.validate = function()
 	{
+		for(var i in validate_options.events)
+		{
+			$(this).each(function(){
+				var obj;
+				alert(this+':'+i);
+			});
+		}
 	}
 
 	$.debug_validates_helpers = function()
 	{
-		if(!debug) { return null; }
-
 		var msg = '';
 
-		for(var i in validate_options)
+		for(var a in validate_options)
 		{
-			msg += i+': ';
+			msg += a+': ';
 
-			if($.isArray(validate_options[i]))
-				msg += ' [\''+validate_options[i].join('\', \'')+'\'] ';
+			if($.isArray(validate_options[a]))
+				msg += ' [\''+validate_options[a].join('\', \'')+'\'] ';
 			else
 			{
 				msg += "{\n";
 
-				for(var n in validate_options[i])
+				for(var b in validate_options[a])
 				{
-					msg += "\t"+n+": {\n";
+					msg += "\t"+b+": {\n";
 
-					if($.isArray(validate_options[i][n]))
-						msg += "\t\t"+validate_options[i][n].join(', ');
+					if($.isArray(validate_options[a][b]))
+						msg += "\t\t['"+validate_options[a][b].join('\', \'')+"']\n";
+					else
+					{
+						for(var c in validate_options[a][b])
+						{
+							msg += "\t\t"+c+": {\n";
+
+							if($.isArray(validate_options[a][b][c]))
+								msg += "\t\t\t['"+validate_options[a][b][c].join('\', \'')+"']\n";
+
+							msg += "\t\t}\n";
+						}	
+					}
 
 					msg += "\t}\n";
 				}
@@ -64,35 +80,40 @@
 				msg += "}";
 			}
 
-			msg+= "\n";
+			msg += "\n";
 		}
+
 		alert(msg);
 	}
 
 	// helpers
 	var merge_objects = function(obj, obj2)
-	{
+	{		
 		for(var i in obj2)
 			obj[i] = obj2[i];
 		return obj;
 	}
 	
-	var store_values = function(name, options)
+	var store_values = function(name, options, args)
 	{
+		if(!validate_options.perform_actions_on[name])
+			validate_options.perform_actions_on[name] = [];
+
+		$.merge(validate_options.perform_actions_on[name], [args]);
+		
 		if(!options) options = {};
 		if(!options['on']) options['on'] = ['submit'];
-		var obj = {};
-		obj[name] = options;
-		for(var i=0;options.on.length>i;i++)
-			validate_options.events[options.on[i]] = name;
 		
-		$.merge(validate_options.elements,obj);
+		for(var i=0;options.on.length>i;i++)
+		{
+			var e = options.on[i];
+			if(!validate_options.events[e])
+				validate_options.events[e] = [];
+
+			$.merge(validate_options.events[e], [name]);
+		}
+
+		eval('var obj = { '+name+': options };');
+		merge_objects(validate_options.elements, obj);
 	}
 })(jQuery);
-
-
-options = {
-	elements: {},
-	presence_of: [],
-	events: {}
-}
