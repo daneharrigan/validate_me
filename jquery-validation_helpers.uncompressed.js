@@ -1,4 +1,13 @@
 (function($){
+	var validate_options = {
+		elements: {},
+		presence_of: [],
+		events: {},
+		perform_actions_on: {},
+		errors: {},
+		form: null
+	};
+	
 	var validates_options = { required: [] };
 	var validates_errors = {};
 
@@ -7,130 +16,167 @@
 	 * accepts string or array of strings
 	 */
 	$.validates_presence_of = function(name) {
-		if (typeof name != 'array')
-			name = [name];
-		$.merge(validates_options.required, name);
+		var names = [];
+		for(i=0;arguments.length>i;i++)
+			$.merge(names, [arguments[i]]);
+
+		$.merge(validate_options.presence_of, names);
 	}
 
-	$.validates_numericality_of = function(name, options) {
-		if(!options)
-			options = {};
-		if(!options['on'])
-			options['on'] = ['submit'];
+	$.validates_numericality_of = function(name, options) { store_values(name, options, 'numericality') }
+	$.validates_length_of = function(name, options) { store_values(name, options, 'length') }
+	$.validates_format_of = function(name, options) { store_values(name, options, 'format') }
+	$.validates_confirmation_of = function(name, options) { store_values(name, options, 'confirmation') }
+	$.validates_uniqueness_of = function(name, options) { store_values(name, options, 'uniqueness') }
+	$.validates_exclusion_of = function(name, options) { store_values(name, options, 'exclusion') }
+	$.validates_inclusion_of = function(name, options) { store_values(name, options, 'inclusion') }
 
-		$(options['on']).each(function(i, option){
-			var required = '*';
-			if($.inArray(name, validates_options.required))
-				required = '+';
-
-			var field = $('input[name='+name+']').get(0);
-			var element = field;
-			if(option == 'submit')
-			{
-				while(element = $(field).parent())
-				{
-					if(element.get(0).tagName.toLowerCase() == 'form')
-						break;
-				}
-			}
-			$(element).bind(option, function(){
-				if(field.value.match('/^[\d]'+required+'$/') == -1)
-					add_validation_message(name, 'value was not a number');
-
-				if( (options['greater_than'] && field.value < options['greater_than']) || (options['greater_than_or_equal_to'] && field.value <= options['greater_than_or_equal_to']) )
-					add_validation_message(name, 'value was too small');
-
-				if( (options['less_than'] && field.value > options['less_than']) || (options['less_than_or_equal_to'] && field.value >= options['less_than_or_equal_to']) )
-					add_validation_message(name, 'value was too large');
-
-				if(options['equal_to'] && field.value != options['equal_to'])
-					add_validation_message(name, 'value was not equal to '+options['equal_to']);
-
-				if(options['even'] && options['even'] == true && field.value%2!=0)
-					add_validation_message(name, 'value was not even');
-
-				if(options['odd'] && options['odd'] == true && field.value%2==0)
-					add_validation_message(name, 'value was not odd');
-			});
-		});
-	}
 
 	$.fn.validate = function()
 	{
-		$(this).submit(function(event){
-			validates_required_fields();
-
-			// temporary code
-			var message = '';
-			for(msg in validates_errors)
-			{
-				message += msg+"\n";
-				$(validates_errors[msg]).each(function(){
-					message += this + "\n";
-				});
-			}
-			alert(message); // temporary
-
-			if($(validates_errors).length>0)
-				event.preventDefault();
-		});
-
-		/* protected methods */
-
-		/**
-		 * processes all elements in validates_options.required
-		 * sets values error values if invalid.
-		 */
-		var validates_required_fields = function()
+		validate_options.form = this;
+		for(var e in validate_options.events)
 		{
-			var radio_values = {};
-			$(validates_options.required).each(function(){
-				var name = this;
-				$('input[name='+name+'],textarea[name='+name+'],select[name='+name+']').each(function(){
-					var tag = this.tagName.toLowerCase();
-					if( (tag == 'input' && this.type.toLowerCase() == 'text') || tag == 'textarea' )
+			$(validate_options.events[e]).each(function(){
+				var element = get_element(this);
+				if(element)
+				{
+					if(e != 'submit')
 					{
-						if(!this.value.length>0)
-							add_validation_message(name, 'must be provided');
-					}
-					else if(tag == 'input' && this.type.toLowerCase() == 'radio')
-					{
-						if(!radio_values[name])
-							radio_values[name] = [];
-						$.merge(radio_values[name], [this.checked]);
-
-						if($(radio_values[name]).length == $('input[name='+name+']').length && $.inArray(true, radio_values[name]) == -1)
-							add_validation_message(name, 'must be provided');
-					}
-					else if(tag == 'select')
-					{
-						var selected = false;
-						$(this).find('option').each(function(){
-							if(this.selected && this.value.length>0)
-								selected = true;
+						$(validate_options.perform_actions_on[this]).each(function(){
+							element.bind(e, method_handler[this]);
 						});
-
-						if(!selected)
-							add_validation_message(name, 'must be provided');
 					}
-				});
+					else
+					{}
+				}
 			});
 		}
-
-		var add_validation_message = function(name, message)
-		{
-			if(!validates_errors[name])
-				validates_errors[name] = [];
-			$.merge(validates_errors[name], [message]);
-		}
 	}
-	/*
-	validates_confirmation_of (ActiveRecord::Validations::ClassMethods)
-	validates_exclusion_of (ActiveRecord::Validations::ClassMethods)
-	validates_format_of (ActiveRecord::Validations::ClassMethods)
-	validates_inclusion_of (ActiveRecord::Validations::ClassMethods)
-	validates_length_of (ActiveRecord::Validations::ClassMethods)
-	validates_numericality_of (ActiveRecord::Validations::ClassMethods)
-	validates_uniqueness_of (ActiveRecord::Validations::ClassMethods)
-	*/
+
+	$.debug_validates_helpers = function()
+	{
+		var msg = '';
+
+		for(var a in validate_options)
+		{
+			msg += a+': ';
+
+			if($.isArray(validate_options[a]))
+				msg += ' [\''+validate_options[a].join('\', \'')+'\'] ';
+			else
+			{
+				msg += "{\n";
+
+				for(var b in validate_options[a])
+				{
+					msg += "\t"+b+": {\n";
+
+					if($.isArray(validate_options[a][b]))
+						msg += "\t\t['"+validate_options[a][b].join('\', \'')+"']\n";
+					else
+					{
+						for(var c in validate_options[a][b])
+						{
+							msg += "\t\t"+c+": {\n";
+
+							if($.isArray(validate_options[a][b][c]))
+								msg += "\t\t\t['"+validate_options[a][b][c].join('\', \'')+"']\n";
+
+							msg += "\t\t}\n";
+						}	
+					}
+
+					msg += "\t}\n";
+				}
+
+				msg += "}";
+			}
+
+			msg += "\n";
+		}
+
+		alert(msg);
+	}
+
+	// helpers
+	var merge_objects = function(obj, obj2)
+	{		
+		for(var i in obj2)
+			obj[i] = obj2[i];
+		return obj;
+	}
+	
+	var store_values = function(name, options, args)
+	{
+		if(!validate_options.perform_actions_on[name])
+			validate_options.perform_actions_on[name] = [];
+
+		$.merge(validate_options.perform_actions_on[name], [args]);
+		
+		if(!options) options = {};
+		if(!options['on']) options['on'] = ['submit'];
+		
+		for(var i=0;options.on.length>i;i++)
+		{
+			var e = options.on[i];
+			if(!validate_options.events[e])
+				validate_options.events[e] = [];
+
+			$.merge(validate_options.events[e], [name]);
+		}
+
+		eval('var obj = { '+name+': options };');
+		merge_objects(validate_options.elements, obj);
+	}
+
+	var get_element = function(name)
+	{
+		var el = $(validate_options.form).find('input[name='+name+']');
+		if(el.size() == 0)
+			el = $(validate_options.form).find('select[name='+name+']');
+		if(el.size() == 0)
+			el = $(validate_options.form).find('textarea[name='+name+']');
+		return el;
+	}
+
+	var add_error = function(name, method, message)
+	{
+		if(!validate_options.errors[name])
+			validate_options.errors[name] = {};
+
+		validate_options.errors[name][method] = message;
+	}
+
+	var method_handler = {
+		numericality: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value;
+			var method = 'numericality';
+
+			if(!options['message']) options['message'] = 'does not meet requirements.';
+
+			if(!!!value.match(/^[\d]*$/))
+				add_error(this.name, options['message']);
+
+			if( !(options['greater_than'] && value>options['greater_than']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['less_than'] && value<options['less_than']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['greater_than_or_equal_to'] && value>=options['greater_than_or_equal_to']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['less_than_or_equal_to'] && value<=options['less_than_or_equal_to']) )
+				add_error(this.name, method, options['message']);
+			//alert($(validate_options.errors[this.name]).size());
+		},
+		length: function(event, element) {},
+		format: function(event, element) {},
+		confirmation: function() {},
+		uniqueness: function(event, element) {},
+		exclusion: function(event, element) {},
+		inclusion: function(event, element) {},
+	};
 })(jQuery);
