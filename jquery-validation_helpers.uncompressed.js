@@ -170,13 +170,72 @@
 
 			if( !(options['less_than_or_equal_to'] && value<=options['less_than_or_equal_to']) )
 				add_error(this.name, method, options['message']);
-			//alert($(validate_options.errors[this.name]).size());
+
+			if( !(options['equal_to'] && value==options['equal_to']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['odd'] && options['odd'] === true && value%2 != 0) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['even'] && options['even'] === true && value%2 == 0) )
+				add_error(this.name, method, options['message']);
 		},
-		length: function(event, element) {},
-		format: function(event, element) {},
+		length: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value.length;
+			var method = 'length';
+
+			if(!options['message']) options['message'] = 'does not meet the correct length.';
+
+			if( !(options['minimum'] && value>=options['minimum']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['maximum'] && value<=options['maximum']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['is'] && value==options['is']) )
+				add_error(this.name, method, options['message']);
+
+			if( !(options['within'] &&
+					$.isArray(options['within']) &&
+					options['within'].length == 2 &&
+					value>=options['within'][0] &&
+					value<=options['within'][1])
+				)
+				add_error(this.name, method, options['message']);
+
+		},
+		format: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value;
+			var method = 'format';
+
+			if(!options['message']) options['message'] = 'does not meet the correct format.';
+
+			if( !(options['with'] && !!value.match(options['with'])) )
+				add_error(this.name, method, options['message']);
+		},
 		confirmation: function() {},
-		uniqueness: function(event, element) {},
-		exclusion: function(event, element) {},
-		inclusion: function(event, element) {},
+		uniqueness: function() {},
+		exclusion: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value;
+			var method = 'exclusion';
+
+			if(!options['message']) options['message'] = 'does not meet the allowed options.';
+
+			if( !(options['in'] && !$.inArray(value, options['in'])) )
+				add_error(this.name, method, options['message']);
+		},
+		inclusion: function() {
+			var options = validate_options.elements[this.name];
+			var value = this.value;
+			var method = 'inclusion';
+
+			if(!options['message']) options['message'] = 'does not meet the allowed options.';
+
+			if( !(options['in'] && $.inArray(value, options['in'])) )
+				add_error(this.name, method, options['message']);
+		},
 	};
 })(jQuery);
