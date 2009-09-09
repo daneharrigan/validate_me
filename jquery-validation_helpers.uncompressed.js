@@ -31,7 +31,6 @@
 	$.validates_exclusion_of = function(name, options) { store_values(name, options, 'exclusion') }
 	$.validates_inclusion_of = function(name, options) { store_values(name, options, 'inclusion') }
 
-
 	$.fn.validate = function()
 	{
 		validate_options.form = this;
@@ -52,6 +51,13 @@
 				}
 			});
 		}
+
+		$(this).submit(function(event){
+			$(validate_options.presence_of).each(function(){
+				if(get_element(name).val().length == 0)
+					event.preventDefault();
+			});
+		});
 	}
 
 	$.debug_validates_helpers = function()
