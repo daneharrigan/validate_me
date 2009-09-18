@@ -5,7 +5,6 @@
 	<script src="jquery-validation_helpers.uncompressed.js" type="text/javascript" charset="utf-8"></script>
 
 	<script type="text/javascript" charset="utf-8">
-		/*
 		$(function(){
 			$.validates_presence_of('age');
 			$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
@@ -19,10 +18,6 @@
 
 			//$('#my_form').validate();
 		});
-		*/
-		var el = { name: 'dane'};
-		
-		alert(keys(el).length);
 	</script>
 
 	<style type="text/css" media="screen">
@@ -31,6 +26,7 @@
 			font: 14px/18px Helvetica, Arial, sans-serif;
 			color: #AAA;
 		}
+		.error { background: #FCC; }
 	</style>
 </head>
 <body>

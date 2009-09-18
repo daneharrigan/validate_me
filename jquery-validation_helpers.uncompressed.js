@@ -6,14 +6,14 @@
 		perform_actions_on: {},
 		errors: {},
 		form: null,
-		highlighter: { pass: function(element){ $(element).removeClass('error') }, fail: function(element){ $(element).addClass('error')} }
+		highlighter: {
+			pass: function(element){ $(element).removeClass('error') },
+			fail: function(element){ $(element).addClass('error') }
+		}
 	};
-	
-	var validates_options = { required: [] };
-	var validates_errors = {}
 
 	/**
-	 * stores name value(s) in validates_options.required
+	 * stores name value(s) in validate_options.presence_of
 	 * accepts string or array of strings
 	 */
 	$.validates_presence_of = function(name)
@@ -47,33 +47,46 @@
 	$.fn.validate = function()
 	{
 		validate_options.form = this;
+		var $form = $(this);
 		for(var e in validate_options.events)
 		{
 			$(validate_options.events[e]).each(function(){
-				var element = get_element(this);
-				if(element)
+			
+				var $element = get_element(this);
+				if($element)
 				{
-					if(e != 'submit')
-					{
-						$(validate_options.perform_actions_on[this]).each(function(){
-							//element.bind(e, method_handler[this]); // remove after testing
-							element.bind(e, function(){
-								method_handler[this](element);
-								highlight_element(element);
-							});
+					$(validate_options.perform_actions_on[this]).each(function(){
+						var method = this;
+						$element.bind(e, function(){
+							method_handler[method]($element);
+							highlight_element($element);
 						});
-					}
-					else
-					{}
+					});
 				}
 			});
 		}
 
-		$(this).submit(function(event){
+		$form.submit(function(event){
+
+			// check if fields are present
 			$(validate_options.presence_of).each(function(){
-				if(get_element(name).val().length == 0)
-					return false;
+				var $element = get_element(this);
+				var options = validate_options.elements[$element[0].name];
+
+				if(!options['message']) options['message'] = 'must be present.';
+
+				if(!error_handler($element[0], ($element.val().length > 0), options['message']))
+					event.preventDefault();
 			});
+
+			// process all events
+			for(var e in validate_options.events)
+			{
+				$(validate_options.events[e]).each(function(){
+					var $element = get_element(this);
+					$element.triggerHandler(e);
+				});
+			}
 		});
 	}
 
@@ -121,6 +134,67 @@
 
 		alert(msg);
 	}
+
+	// private methods
+	var method_handler = {
+		numericality: function(element) {
+			var options = validate_options.elements[element.name];
+			var value = element.value;
+			var method = 'numericality';
+
+			if(!options['message']) options['message'] = 'does not meet requirements.';
+
+			error_handler(element, { command: (!!value.match(/^[\d]*$/)), message: options['message'], method: method });
+			error_handler(element, { command: (options['greater_than'] && value>options['greater_than']), message: options['message'], method: method });
+			error_handler(element, { command: (options['less_than'] && value<options['less_than']), message: options['message'], method: method });
+			error_handler(element, { command: (options['greater_than_or_equal_to'] && value>=options['greater_than_or_equal_to']), message: options['message'], method: method });
+			error_handler(element, { command: (options['less_than_or_equal_to'] && value<=options['less_than_or_equal_to']), message: options['message'], method: method });
+			error_handler(element, { command: (options['equal_to'] && value==options['equal_to']), message: options['message'], method: method });
+			error_handler(element, { command: (options['odd'] && options['odd'] === true && value%2 != 0), message: options['message'], method: method });
+			error_handler(element, { command: (options['even'] && options['even'] === true && value%2 == 0), message: options['message'], method: method });
+		},
+		length: function(element) {
+			var options = validate_options.elements[element.name];
+			var value = element.value.length;
+			var method = 'length';
+
+			if(!options['message']) options['message'] = 'does not meet the correct length.';
+
+			error_handler(element, { command: (options['minimum'] && value>=options['minimum']), message: options['message'], method: method });
+			error_handler(element, { command: (options['maximum'] && value<=options['maximum']), message: options['message'], method: method });
+			error_handler(element, { command: (options['is'] && value==options['is']), message: options['message'], method: method });
+			error_handler(element, { command: (options['within'] && $.isArray(options['within']) && options['within'].length == 2 && value>=options['within'][0] && value<=options['within'][1]), message: options['message'], method: method });
+		},
+		format: function(element) {
+			var options = validate_options.elements[element.name];
+			var value = element.value;
+			var method = 'format';
+
+			if(!options['message']) options['message'] = 'does not meet the correct format.';
+
+			error_handler(element, { command: (options['with'] && !!value.match(options['with'])), message: options['message'], method: method });
+		},
+		confirmation: function(element) {}, // not coded yet
+		uniqueness: function(element) {}, // not coded yet
+		exclusion: function(element) {
+			var options = validate_options.elements[element.name];
+			var value = element.value;
+			var method = 'exclusion';
+
+			if(!options['message']) options['message'] = 'does not meet the allowed options.';
+
+			error_handler(element, { command: (options['in'] && !$.inArray(value, options['in'])), message: options['message'], method: method });
+		},
+		inclusion: function(element) {
+			var options = validate_options.elements[element.name];
+			var value = element.value;
+			var method = 'inclusion';
+
+			if(!options['message']) options['message'] = 'does not meet the allowed options.';
+
+			error_handler(element, { command: (options['in'] && $.inArray(value, options['in'])), message: options['message'], method: method });
+		}
+	};
 
 	// helpers
 	var merge_objects = function(obj, obj2)
@@ -194,71 +268,17 @@
 			validate_options.highlighter.pass(element);
 	}
 
-	var error_handler = function(element, command, message)
+	var error_handler = function(element, args)
 	{
-		if(command)
-			remove_error(element.name, method);
+		if(args['command'])
+		{
+			remove_error(element.name, args['method']);
+			return true;
+		}
 		else
-			add_error(element.name, message);
+		{
+			add_error(element.name, args['method'], args['message']);
+			return false;
+		}
 	}
-
-	var method_handler = {
-		numericality: function(element) {
-			var options = validate_options.elements[element.name];
-			var value = element.value;
-			var method = 'numericality';
-
-			if(!options['message']) options['message'] = 'does not meet requirements.';
-
-			error_handler(element, (!!value.match(/^[\d]*$/)), options['message']);
-			error_handler(element, (options['greater_than'] && value>options['greater_than']), options['message']);
-			error_handler(element, (options['less_than'] && value<options['less_than']), options['message']);
-			error_handler(element, (options['greater_than_or_equal_to'] && value>=options['greater_than_or_equal_to']), options['message']);
-			error_handler(element, (options['less_than_or_equal_to'] && value<=options['less_than_or_equal_to']), options['message']);
-			error_handler(element, (options['equal_to'] && value==options['equal_to']), options['message']);
-			error_handler(element, (options['odd'] && options['odd'] === true && value%2 != 0), options['message']);
-			error_handler(element, (options['even'] && options['even'] === true && value%2 == 0), options['message']);
-		},
-		length: function(element) {
-			var options = validate_options.elements[element.name];
-			var value = element.value.length;
-			var method = 'length';
-
-			if(!options['message']) options['message'] = 'does not meet the correct length.';
-
-			error_handler(element, (options['minimum'] && value>=options['minimum']), options['message']);
-			error_handler(element, (options['maximum'] && value<=options['maximum']), options['message']);
-			error_handler(element, (options['is'] && value==options['is']), options['message']);
-			error_handler(element, (options['within'] && $.isArray(options['within']) && options['within'].length == 2 && value>=options['within'][0] && value<=options['within'][1]), options['message']);
-		},
-		format: function(element) {
-			var options = validate_options.elements[element.name];
-			var value = element.value;
-			var method = 'format';
-
-			if(!options['message']) options['message'] = 'does not meet the correct format.';
-
-			error_handler(element, (options['with'] && !!value.match(options['with'])), options['message']);
-		},
-		confirmation: function(element) {}, // not coded yet
-		uniqueness: function(element) {}, // not coded yet
-		exclusion: function(element) {
-			var options = validate_options.elements[element.name];
-			var value = element.value;
-			var method = 'exclusion';
-
-			if(!options['message']) options['message'] = 'does not meet the allowed options.';
-
-			error_handler(element, (options['in'] && !$.inArray(value, options['in'])), options['message']);
-		},
-		inclusion: function(element) {
-			var options = validate_options.elements[element.name];
-			var value = element.value;
-			var method = 'inclusion';
-
-			if(!options['message']) options['message'] = 'does not meet the allowed options.';
-
-			error_handler(element, (options['in'] && $.inArray(value, options['in'])), options['message']);
-		},
-	};
 })(jQuery);
