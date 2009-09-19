@@ -10,6 +10,13 @@
 		highlighter: {
 			pass: function(element){ $(element).removeClass('error') },
 			fail: function(element){ $(element).addClass('error') }
+		},
+		messages: {
+			numericality: 'does not meet requirements.',
+			length: 'does not meet the correct length.',
+			format: 'does not meet the correct format.',
+			exclusion: 'does not meet the allowed options.',
+			inclusion: 'does not meet the allowed options.'
 		}
 	};
 
@@ -104,6 +111,8 @@
 
 			if($.isArray(validate_options[a]))
 				msg += ' [\''+validate_options[a].join('\', \'')+'\'] ';
+			else if(typeof validate_options[a] == 'string')
+				msg += validate_options[a];
 			else
 			{
 				msg += "{\n";
@@ -114,6 +123,8 @@
 
 					if($.isArray(validate_options[a][b]))
 						msg += "\t\t['"+validate_options[a][b].join('\', \'')+"']\n";
+					else if(typeof validate_options[a][b] == 'string')
+						msg += validate_options[a][b];
 					else
 					{
 						for(var c in validate_options[a][b])
@@ -122,6 +133,8 @@
 
 							if($.isArray(validate_options[a][b][c]))
 								msg += "\t\t\t['"+validate_options[a][b][c].join('\', \'')+"']\n";
+							else if(typeof validate_options[a][b][c] == 'string')
+								msg += validate_options[a][b][c];
 
 							msg += "\t\t}\n";
 						}	
@@ -147,8 +160,6 @@
 			var options = validate_options.elements[element.name];
 			var value = element.value;
 			var method = 'numericality';
-
-			if(!options['message']) options['message'] = 'does not meet requirements.';
 
 			if(!!!value.match(/^[\d]*$/))
 				validate_options.fail[element.name] = true;
@@ -181,11 +192,6 @@
 			var value = element.value.length;
 			var method = 'length';
 
-			if(!options['message']) options['message'] = 'does not meet the correct length.';
-
-			if(!!!value.match(/^[\d]*$/))
-				validate_options.fail[element.name] = true;
-
 			if(options['minimum'] && !(options['minimum'] && value>=options['minimum']))
 				validate_options.fail[element.name] = true;
 			
@@ -205,8 +211,6 @@
 			var value = element.value;
 			var method = 'format';
 
-			if(!options['message']) options['message'] = 'does not meet the correct format.';
-
 			if(options['with'] && !(options['with'] && !!value.match(options['with'])))
 				validate_options.fail[element.name] = true;
 		},
@@ -219,8 +223,6 @@
 			var value = element.value;
 			var method = 'exclusion';
 
-			if(!options['message']) options['message'] = 'does not meet the allowed options.';
-
 			if(options['in'] && !(options['in'] && !$.inArray(value, options['in'])))
 				validate_options.fail[element.name] = true;
 		},
@@ -231,8 +233,6 @@
 			var value = element.value;
 			var method = 'inclusion';
 
-			if(!options['message']) options['message'] = 'does not meet the allowed options.';
-
 			if(options['in'] && !(options['in'] && $.inArray(value, options['in'])))
 				validate_options.fail[element.name] = false;
 		}
@@ -242,7 +242,15 @@
 	var merge_objects = function(obj, obj2)
 	{		
 		for(var i in obj2)
-			obj[i] = obj2[i];
+		{
+			if(obj[i])
+			{
+				for(var n in obj2[i])
+					obj[i][n] = obj2[i];
+			}
+			else
+				obj[i] = obj2[i];
+		}
 		return obj;
 	}
 	
@@ -255,14 +263,20 @@
 		
 		if(!options) options = {};
 		if(!options['on']) options['on'] = ['submit'];
-		
+		if(!$.isArray(options['on']))
+			options['on'] = [options['on']];
+
+		if(options['message'])
+			validate_options.messages[args] = options['message'];
+
 		for(var i=0;options.on.length>i;i++)
 		{
 			var e = options.on[i];
 			if(!validate_options.events[e])
 				validate_options.events[e] = [];
 
-			$.merge(validate_options.events[e], [name]);
+			if($.inArray(name,validate_options.events[e]))
+				$.merge(validate_options.events[e], [name]);
 		}
 
 		eval('var obj = { '+name+': options };');
@@ -280,29 +294,6 @@
 		return el;
 	}
 
-	/*
-	var add_error = function(name, method, message)
-	{
-		if(!validate_options.errors[name])
-			validate_options.errors[name] = {};
-
-		validate_options.errors[name][method] = message;
-	}
-
-	var remove_error = function(name, method)
-	{
-		if(validate_options.errors[name] && validate_options.errors[name][method])
-		{
-			delete validate_options.errors[name][method];
-			var count = 0;
-			for(var index in validate_options.errors[name])
-				count++;
-
-			if(count == 0)
-				delete validate_options.errors[name];
-		}
-	}
-	*/
 	var highlight_element = function(element)
 	{
 		if(validate_options.fail[element.name])
@@ -310,20 +301,4 @@
 		else
 			validate_options.highlighter.pass(element);
 	}
-
-	/*
-	var error_handler = function(element, args)
-	{
-		if(args['command'])
-		{
-			remove_error(element.name, args['method']);
-			return true;
-		}
-		else
-		{
-			add_error(element.name, args['method'], args['message']);
-			return false;
-		}
-	}
-	*/
 })(jQuery);

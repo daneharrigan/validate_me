@@ -6,9 +6,13 @@
 
 	<script type="text/javascript" charset="utf-8">
 		$(function(){
-			$.validates_presence_of('age');
-			$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });
- 			//$.debug_validates_helpers();
+			$.validates_presence_of('first_name','age');
+
+			$.validates_numericality_of('first_name', { on: ['submit','keyup'], greater_than: 3, less_than: 60 });
+			$.validates_length_of('first_name', { on: 'keyup', maximum: 4, minimum: 2 });
+			//$.validates_format_of('first_name', { on: 'keyup', with: /^[\d]*$/ });
+
+ 			$.debug_validates_helpers();
 
 			$('#my_form').validate();
 

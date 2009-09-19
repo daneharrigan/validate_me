@@ -1,4 +1,12 @@
-1. Move options.messages to central location
-2. Code method_handler.confirmation
-3. Code method_handler.uniqueness
-4. Compress code
+h1. My Todo's for jQuery's validates_helpers
+
+h2. TODO
+* Code method_handler.confirmation
+* Code method_handler.uniqueness
+* Compress code
+
+h2. Problems
+
+* Using multiple validation methods does not work.
+* validate_options.fail[element.name] gets reset to false on every test.
+  Should store as array validate_options.fail[element.name] = ['numericality','length','format']
