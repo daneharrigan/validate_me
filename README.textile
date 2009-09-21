@@ -1,6 +1,9 @@
 h1. validate_me (in jQuery)
 
+NOTE: This repository will be renamed to validate_me after the Rackspace move is complete.
+
 I hate doing form validation. It's that simple. So I figured I'd take a few extra minutes, er... days, ok a week or two and put together *validate_me* as a jQuery plugin.
+
 I don't mind writing validation logic with Ruby on Rails validates_* methods so I mimicked that style as best I could in JavaScript.
 
 h2. The Syntax
