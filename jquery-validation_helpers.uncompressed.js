@@ -4,7 +4,7 @@
 		presence_of: [],
 		events: {},
 		perform_actions_on: {},
-		errors: {},
+		errors: {}, // maybe remove this
 		fail: {},
 		form: null,
 		highlighter: {
@@ -16,7 +16,8 @@
 			length: 'does not meet the correct length.',
 			format: 'does not meet the correct format.',
 			exclusion: 'does not meet the allowed options.',
-			inclusion: 'does not meet the allowed options.'
+			inclusion: 'does not meet the allowed options.',
+			presence: 'must be present.'
 		}
 	};
 
@@ -24,15 +25,18 @@
 	 * stores name value(s) in validate_options.presence_of
 	 * accepts string or array of strings
 	 */
-	$.validates_presence_of = function(name)
+
+	$.validates_presence_of = function()
 	{
 		var names = [];
 		for(i=0;arguments.length>i;i++)
+		{
 			$.merge(names, [arguments[i]]);
+			validate_options.fail[arguments[i]] = [];
+		}
 
 		$.merge(validate_options.presence_of, names);
 	}
-
 	$.validates_numericality_of = function(name, options) { store_values(name, options, 'numericality') }
 	$.validates_length_of = function(name, options) { store_values(name, options, 'length') }
 	$.validates_format_of = function(name, options) { store_values(name, options, 'format') }
@@ -77,17 +81,16 @@
 		$form.submit(function(event){
 
 			// check if fields are present
+			var complete = true;
 			$(validate_options.presence_of).each(function(){
 				var $element = get_element(this);
 				var options = validate_options.elements[$element[0].name];
-
-				if(!options['message']) options['message'] = 'must be present.';
+				var fail = false;
 
 				if(!($element.val().length > 0))
-				{
-					validate_options.fail[$element[0].name] = true;
-					event.preventDefault();
-				}
+					fail = true;
+
+				reset_failure($element[0].name, 'presence', fail);
 			});
 
 			// process all events
@@ -98,143 +101,106 @@
 					$element.triggerHandler(e);
 				});
 			}
-		});
-	}
 
-	$.debug_validates_helpers = function()
-	{
-		var msg = '';
-
-		for(var a in validate_options)
-		{
-			msg += a+': ';
-
-			if($.isArray(validate_options[a]))
-				msg += ' [\''+validate_options[a].join('\', \'')+'\'] ';
-			else if(typeof validate_options[a] == 'string')
-				msg += validate_options[a];
-			else
+			for(var name in validate_options.fail)
 			{
-				msg += "{\n";
-
-				for(var b in validate_options[a])
-				{
-					msg += "\t"+b+": {\n";
-
-					if($.isArray(validate_options[a][b]))
-						msg += "\t\t['"+validate_options[a][b].join('\', \'')+"']\n";
-					else if(typeof validate_options[a][b] == 'string')
-						msg += validate_options[a][b];
-					else
-					{
-						for(var c in validate_options[a][b])
-						{
-							msg += "\t\t"+c+": {\n";
-
-							if($.isArray(validate_options[a][b][c]))
-								msg += "\t\t\t['"+validate_options[a][b][c].join('\', \'')+"']\n";
-							else if(typeof validate_options[a][b][c] == 'string')
-								msg += validate_options[a][b][c];
-
-							msg += "\t\t}\n";
-						}	
-					}
-
-					msg += "\t}\n";
-				}
-
-				msg += "}";
+				if(validate_options.fail[name].length>0)
+					complete = false;
 			}
 
-			msg += "\n";
-		}
-
-		alert(msg);
+			if(!complete)
+				return false;
+		});
 	}
 
 	// private methods
 	var method_handler = {
 		numericality: function(element) {
-			validate_options.fail[element.name] = false;
-
+			var fail = false;
 			var options = validate_options.elements[element.name];
 			var value = element.value;
 			var method = 'numericality';
 
 			if(!!!value.match(/^[\d]*$/))
-				validate_options.fail[element.name] = true;
-				
-			if(options['greater_than'] && !(value>options['greater_than']))
-				validate_options.fail[element.name] = true;
+				fail = true;
+
+			if(options['greater_than'] && !(value > options['greater_than']))
+				fail = true;			
 			
-			if(options['less_than'] && !(value<options['less_than']))
-				validate_options.fail[element.name] = true;
+			if(options['less_than'] && !(value < options['less_than']))
+				fail = true;
 
-			if(options['greater_than_or_equal_to'] && !(value>=options['greater_than_or_equal_to']))
-				validate_options.fail[element.name] = true;
+			if(options['greater_than_or_equal_to'] && !(value >= options['greater_than_or_equal_to']))
+				fail = true;
 
-			if(options['less_than_or_equal_to'] && !(value<=options['less_than_or_equal_to']))
-				validate_options.fail[element.name] = true;
+			if(options['less_than_or_equal_to'] && !(value <= options['less_than_or_equal_to']))
+				fail = true;
 
-			if(options['equal_to'] && !(value==options['equal_to']))
-				validate_options.fail[element.name] = true;
+			if(options['equal_to'] && !(value == options['equal_to']))
+				fail = true;
 
-			if(options['odd'] && !(options['odd'] === true && value%2 != 0))
-				validate_options.fail[element.name] = true;
+			if(options['odd'] && !(options['odd'] == true && value%2 != 0))
+				fail = true;
 
-			if(options['even'] && !(options['even'] === true && value%2 == 0))
-				validate_options.fail[element.name] = true;
+			if(options['even'] && !(options['even'] == true && value%2 == 0))
+				fail = true;
+
+			reset_failure(element.name, method, fail);
 		},
 		length: function(element) {
-			validate_options.fail[element.name] = false;
-
+			var fail = false;
 			var options = validate_options.elements[element.name];
 			var value = element.value.length;
 			var method = 'length';
 
 			if(options['minimum'] && !(options['minimum'] && value>=options['minimum']))
-				validate_options.fail[element.name] = true;
-			
+				fail = true;
+
 			if(options['maximum'] && !(options['maximum'] && value<=options['maximum']))
-				validate_options.fail[element.name] = true;
+				fail = true;
 
 			if(options['is'] && !(options['is'] && value==options['is']))
-				validate_options.fail[element.name] = true;
+				fail = true;
 
 			if(options['within'] && !(options['within'] && $.isArray(options['within']) && options['within'].length == 2 && value>=options['within'][0] && value<=options['within'][1]))
-				validate_options.fail[element.name] = true;
+				fail = true;
+
+			reset_failure(element.name, method, fail);
 		},
 		format: function(element) {
-			validate_options.fail[element.name] = false;
-
+			var fail = false;
 			var options = validate_options.elements[element.name];
 			var value = element.value;
 			var method = 'format';
 
 			if(options['with'] && !(options['with'] && !!value.match(options['with'])))
-				validate_options.fail[element.name] = true;
+				fail = true;
+
+			reset_failure(element.name, method, fail);
 		},
 		confirmation: function(element) {}, // not coded yet
 		uniqueness: function(element) {}, // not coded yet
 		exclusion: function(element) {
-			validate_options.fail[element.name] = false;
-
+			var fail = false;
 			var options = validate_options.elements[element.name];
 			var value = element.value;
 			var method = 'exclusion';
 
-			if(options['in'] && !(options['in'] && !$.inArray(value, options['in'])))
-				validate_options.fail[element.name] = true;
+			if(options['in'] && $.inArray(value, options['in']) == -1)
+				fail = true;
+
+			reset_failure(element.name, method, fail);
 		},
 		inclusion: function(element) {
-			validate_options.fail[element.name] = false;
-
+			var fail = false;
 			var options = validate_options.elements[element.name];
 			var value = element.value;
 			var method = 'inclusion';
 
-			if(options['in'] && !(options['in'] && $.inArray(value, options['in'])))
-				validate_options.fail[element.name] = false;
+			if(options['in'] && $.inArray(value, options['in']) > -1)
+				fail = true;
+
+			reset_failure(element.name, method, fail);
 		}
 	};
 
@@ -246,7 +212,7 @@
 			if(obj[i])
 			{
 				for(var n in obj2[i])
-					obj[i][n] = obj2[i];
+					obj[i][n] = obj2[i][n];
 			}
 			else
 				obj[i] = obj2[i];
@@ -256,6 +222,8 @@
 	
 	var store_values = function(name, options, args)
 	{
+		validate_options.fail[name] = [];
+
 		if(!validate_options.perform_actions_on[name])
 			validate_options.perform_actions_on[name] = [];
 
@@ -296,9 +264,75 @@
 
 	var highlight_element = function(element)
 	{
-		if(validate_options.fail[element.name])
+		if(validate_options.fail[element.name].length>0)
 			validate_options.highlighter.fail(element);
 		else
 			validate_options.highlighter.pass(element);
 	}
+
+	var reset_failure = function(name, method, fail)
+	{
+		if($.inArray(method, validate_options.fail[name])>-1)
+			validate_options.fail[name].splice(validate_options.fail[name].indexOf(method),1);
+
+		if(fail && $.inArray(method, validate_options.fail[name]) == -1)
+			$.merge(validate_options.fail[name], [method]);
+	}
+
+
+/********
+$.debug_validates_helpers = function()
+{
+	var msg = '';
+
+	for(var a in validate_options)
+	{
+		msg += a+': ';
+
+		if($.isArray(validate_options[a]))
+			msg += ' [\''+validate_options[a].join('\', \'')+'\'] ';
+		else if(typeof validate_options[a] == 'string')
+			msg += validate_options[a];
+		else
+		{
+			msg += "{\n";
+
+			for(var b in validate_options[a])
+			{
+				msg += "\t"+b+": {\n";
+
+				if($.isArray(validate_options[a][b]))
+					msg += "\t\t['"+validate_options[a][b].join('\', \'')+"']\n";
+				else if(typeof validate_options[a][b] == 'string')
+					msg += validate_options[a][b];
+				else
+				{
+					for(var c in validate_options[a][b])
+					{
+						msg += "\t\t"+c+": {\n";
+
+						if($.isArray(validate_options[a][b][c]))
+							msg += "\t\t\t['"+validate_options[a][b][c].join('\', \'')+"']\n";
+						else if(typeof validate_options[a][b][c] == 'string')
+							msg += validate_options[a][b][c];
+
+						msg += "\t\t}\n";
+					}	
+				}
+
+				msg += "\t}\n";
+			}
+
+			msg += "}";
+		}
+
+		msg += "\n";
+	}
+
+	alert(msg);
+}
+
+
+*********/
+
 })(jQuery);

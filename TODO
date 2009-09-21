@@ -1,12 +1,8 @@
-h1. My Todo's for jQuery's validates_helpers
+h1. My Todo's for jQuery's validate_me
 
 h2. TODO
-* Code method_handler.confirmation
-* Code method_handler.uniqueness
-* Compress code
+* validates_uniqueness_of
+* validates_confirmation_of
+* compressed version
 
-h2. Problems
-
-* Using multiple validation methods does not work.
-* validate_options.fail[element.name] gets reset to false on every test.
-  Should store as array validate_options.fail[element.name] = ['numericality','length','format']
+This list is also at the bottom of the README

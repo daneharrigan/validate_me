@@ -1,23 +1,107 @@
-h1. validates_helpers (in jQuery)
+h1. validate_me (in jQuery)
 
-h2. The Plan
-
-It's still an idea of mine that I'm trying to execute. Definitely not complete, but I'm attempting to model HTML form validation off of Ruby on Rails model data validating methods.
+I hate doing form validation. It's that simple. So I figured I'd take a few extra minutes, er... days, ok a week or two and put together *validate_me* as a jQuery plugin.
+I don't mind writing validation logic with Ruby on Rails validates_* methods so I mimicked that style as best I could in JavaScript.
 
 h2. The Syntax
 
-This is how I'm structuring things:
-
-h3. Required fields
+Below you'll find code examples. There is also an <code>example.html</code> file to show this plugin in action.
 
 
+h3. validates_presence_of
+
+Define one at a time:
 <pre><code>$.validates_presence_of('first_name');
-$.validates_presence_of('age');</code></pre>
+$.validates_presence_of('last_name');</code></pre>
 
 Or define them in one line:
 
 <code>$.validates_presence_of('first_name','age');</code>
 
-h3. Numbers
+h3. validates_numericality_of
 
-<code>$.validates_numericality_of('age', { on: ['submit','keyup'], greater_than: 3, less_than: 6 });</code>
+<pre><code>$.validates_numericality_of('age', {
+	on: ['keyup','blur'], // a single event can be passed as a string (see next example)
+	greater_than: 18,
+	less_than: 35,
+	greater_than_or_equal_to: 18,
+	less_than_or_equal_to: 35,
+	equal_to: 24,
+	odd: true,
+	even: true,
+	message: 'Sorry the age was incorrect.' // this will overwrite the default failing message
+});</code></pre>
+
+Of course defining all of these requirements at once makes no sense, but now you can easily see what options you have available.
+
+h3. validates_length_of
+
+<pre><code>$.validates_length_of('first_name',{
+	on: 'keyup',
+	minimum: 2,
+	maximum: 50,
+	is: 4,
+	within: [1,50],
+	message: 'Sorry the first name was incorrect.' // this will overwrite the default failing message
+});</code></pre>
+
+Once again, all the available options are presented in this example, but defining them all wouldn't be too sweet.
+
+h3. validates_format_of
+
+<pre><code>$.validates_format_of('middle_initial',{
+	on: 'keyup',
+	with: /^[A-Z]$/,
+	message: 'Sorry the middle initial was incorrect.' // this will overwrite the default failing message
+});</code></pre>
+
+This would probably be used to validate an email address or possibly a phone number. My example is simply validating a single capitalized character.
+
+h3. validates_exclusion_of
+
+<pre><code>$.validates_exclusion_of('username',{
+	on: 'blur',
+	in: ['admin','root','superuser'],
+	message: 'Sorry that is an incorrect username.' // this will overwrite the default failing message
+});</code></pre>
+
+This is a very simple method for defining what values a field *cannot* be. It wouldn't be smart to allow someone to create a username of root or admin.
+
+h3. validates_inclusion_of
+
+<pre><code>$.validates_inclusion_of('language',{
+	on: 'blur',
+	in: ['ruby','php','perl','python','java','c','c++'],
+	message: 'Sorry we were not asking for that language.' // this will overwrite the default failing message
+});</code></pre>
+
+An inverse of <code>validates_exclusion_of</code>, this method allows you to define the *only* accepted values from a field.
+
+h3. validates_confirmation_of
+
+Coming soon...
+
+h3. validates_uniqueness_of
+
+Coming soon...
+
+h2. Defaults/Customization
+
+By default when a field fails the validation an <code>error</code> class is applied to it. Once the field passes the class is removed. Custom failing presentation can be defined like so:
+
+<pre><code>$.validate_highlighter({
+	fail: function(element){
+		$(element).parent().addClass('error');
+	},
+	pass: function(element){
+		$(element).parent().removeClass('error');		
+	}
+});</code></pre>
+
+Notice <code>element</code> is passed into the function. Now the parent element of the field is given the <code>error</code> class.
+
+h2. Incomplete
+
+* validates_uniqueness_of
+* validates_confirmation_of
+* compressed version
